@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="carousel.js"></script>
+    <link rel='stylesheet' type='text/css' href = 'carousel.css'>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+        .carouselContainer {
+            height: 150px;
+            position: relative;
+        }
+    </style>
+    <script>
+        $(document).ready(function() {
+            $.installCarousel('.carouselContainer', {
+                images: new Array('image1.jpg', 'image2.jpg', 'image3.jpg'),
+                click: function(index, image) {
+                    console.log("image" + index + "(" + image + ") clicked");
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="carouselContainer"></div>
+</body>
+</html>
