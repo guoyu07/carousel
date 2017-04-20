@@ -56,6 +56,20 @@ $.installCarousel = function(container, option) {
         imageItem.attr("src", renderImages[i]);
         imageItem.css("width", width + "px");
         imageItem.css("height", height + "px");
+        imageItem.bind("click", (function(i, image) {
+            // 用于首尾过渡的图片需要特殊处理
+            if (finalOption.images.length > 1) {
+                --i;
+                if (i == -1) {
+                    i = finalOption.images.length - 1;
+                } else if (i == renderImages.length - 2) {
+                    i = 0;
+                }
+            }
+            return function(event) {
+                finalOption.click(i, image);
+            }
+        })(i, renderImages[i]));
         imageList.append(imageItem);
     }
 
@@ -89,7 +103,6 @@ $.installCarousel = function(container, option) {
         imageList.addClass("slideTrans");
 
         imageList.on('transitionend webkitTransitionEnd oTransitionEnd', function (event) {
-            console.log("trans end");
             // 由于transitionend会对每个属性回调一次,所以只处理其中一个
             if (event.originalEvent.propertyName == "transform") {
                 // 停止动画
@@ -143,6 +156,9 @@ $.installCarousel = function(container, option) {
         var rightBound = (renderImages.length - 1) * width * -1;
         // 父容器注册下拉事件
         $(container).on("touchstart", function (event) {
+            // 防止事件向body冒泡
+            event.stopPropagation();
+
             if (!touchEvent) {
                 // 第一根指头触屏, 产生新的触摸事件
                 touchEvent = {};
@@ -161,8 +177,7 @@ $.installCarousel = function(container, option) {
             imageList.removeClass("slideTrans");
             imageList.unbind();
         }).on("touchmove", function (event) {
-            // 禁止默认处理,停止冒泡
-            event.preventDefault();
+            // 防止事件向body冒泡
             event.stopPropagation();
 
             // 在翻页未完成前触摸,将被忽略
@@ -190,6 +205,9 @@ $.installCarousel = function(container, option) {
             }
             setTranslateX(destX);
         }).on("touchend touchcancel", function (event) {
+            // 防止事件向body冒泡
+            event.stopPropagation();
+
             // 从touchEvent移除手指对应的记录
             compareTouchFingers(event);
 
@@ -218,11 +236,15 @@ $.installCarousel = function(container, option) {
             if (deltaX * 2>= width || deltaTime <= 200) { // 超过半屏 或者 触屏时间小于200毫秒
                 isSlide = true;
             }
-            // 满足翻页, 则计算下一页的下标
-            if (isSlide) {
-                transImageList(curIndex + (curX < prevX ? 1 : (curX == prevX ? 0 : -1)));
-            } else { // 否则回到原先位置
-                transImageList(curIndex);
+            // 满足翻页, 计算下一页的下标
+            if (deltaX != 0) {
+                if (isSlide) {
+                    transImageList(curIndex + (curX < prevX ? 1 : -1));
+                } else { // 否则回到原先位置
+                    transImageList(curIndex);
+                }
+            } else { // 没有滑动, 不执行动画
+                slideEvent = null;
             }
         });
     }
