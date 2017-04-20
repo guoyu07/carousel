@@ -161,6 +161,10 @@ $.installCarousel = function(container, option) {
             imageList.removeClass("slideTrans");
             imageList.unbind();
         }).on("touchmove", function (event) {
+            // 禁止默认处理,停止冒泡
+            event.preventDefault();
+            event.stopPropagation();
+
             // 在翻页未完成前触摸,将被忽略
             if (touchEvent != slideEvent) {
                 return;
