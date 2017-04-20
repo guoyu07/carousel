@@ -132,8 +132,8 @@ $.installCarousel = function(container, option) {
     function compareTouchFingers(event) {
         var identSet = {};
         // 将不存在手指的添加到集合中
-        for (var i = 0; i < event.originalEvent.touches.length; ++i) {
-            var touch = event.originalEvent.touches[i];
+        for (var i = 0; i < event.originalEvent.targetTouches.length; ++i) {
+            var touch = event.originalEvent.targetTouches[i];
             identSet[touch.identifier] = true;
             if (touchEvent[touch.identifier] === undefined) {
                 touchEvent[touch.identifier] = null;
@@ -188,13 +188,15 @@ $.installCarousel = function(container, option) {
             var maxDelta = 0;
             for (var i = 0; i < event.originalEvent.changedTouches.length; ++i) {
                 var fingerTouch = event.originalEvent.changedTouches[i];
-                if (touchEvent[fingerTouch.identifier] !== null) {
-                    var delta = fingerTouch.clientX - touchEvent[fingerTouch.identifier];
-                    if (Math.abs(delta) > Math.abs(maxDelta)) {
-                        maxDelta = delta;
+                if (touchEvent[fingerTouch.identifier] !== undefined) {
+                    if (touchEvent[fingerTouch.identifier] !== null) {
+                        var delta = fingerTouch.clientX - touchEvent[fingerTouch.identifier];
+                        if (Math.abs(delta) > Math.abs(maxDelta)) {
+                            maxDelta = delta;
+                        }
                     }
+                    touchEvent[fingerTouch.identifier] = fingerTouch.clientX;
                 }
-                touchEvent[fingerTouch.identifier] = fingerTouch.clientX;
             }
             // 移动到指定偏移
             var destX = curX + maxDelta;
@@ -236,6 +238,7 @@ $.installCarousel = function(container, option) {
             if (deltaX * 2>= width || deltaTime <= 200) { // 超过半屏 或者 触屏时间小于200毫秒
                 isSlide = true;
             }
+
             // 满足翻页, 计算下一页的下标
             if (deltaX != 0) {
                 if (isSlide) {
