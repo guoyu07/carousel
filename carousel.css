@@ -1,0 +1,23 @@
+.carouselImageList {
+    transform:translateX(0px);
+    -ms-transform:translateX(0px);	/* IE 9 */
+    -moz-transform:translateX(0px); 	/* Firefox */
+    -webkit-transform:translateX(0px); /* Safari 和 Chrome */
+    -o-transform:translateX(0px); 	/* Opera */
+}
+.carouselImageList image {
+    display: block;
+    float: left;
+}
+.carouselImageList:after {
+    display: block;
+    content: '';
+    clear: both;
+}
+.slideTrans
+{
+    transition: transform 0.3s ease-out;
+    -moz-transition: transform 0.3s ease-out; /* Firefox 4 */
+    -webkit-transition: transform 0.3s ease-out; /* Safari 和 Chrome */
+    -o-transition: transform 0.3s ease-out; /* Opera */
+}
