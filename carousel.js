@@ -135,19 +135,20 @@ $.installCarousel = function(container, option) {
     // 浏览器对changedTouches的实现存在问题, 因此总是使用全量的touches进行比对
     function compareTouchFingers(event) {
         var identSet = {};
-        // 将不存在手指的添加到集合中
+
+        // 添加target内新出现的手指
         for (var i = 0; i < event.originalEvent.targetTouches.length; ++i) {
             var touch = event.originalEvent.targetTouches[i];
             identSet[touch.identifier] = true;
             if (touchFingers[touch.identifier] === undefined) {
-                touchFingers[touch.identifier] = null;
+                touchFingers[touch.identifier] = { clientX: touch.clientX, target: touch.target };
                 ++fingerCount;
             }
         }
-        // 将已删除的手指集合清理
+        // 将target内消失的手指移除
         for (var identifier in touchFingers) {
-            // 浏览器集合中已不存在,删除
-            if (identSet[identifier] === undefined) {
+            // 与本次touchevent属于同一个target,但是touchevent中已消失的手指,需要移除
+            if (identSet[identifier] === undefined && touchFingers[identifier].target === event.originalEvent.target) {
                 delete(touchFingers[identifier]);
                 --fingerCount;
             }
@@ -165,7 +166,6 @@ $.installCarousel = function(container, option) {
             compareTouchFingers(event);
 
             if (!beforeFingerCount && fingerCount) { // 开始触摸
-                console.log("开始触摸");
                 ++touchEventID; // 新建触摸事件
                 if (!slideEventID) { // 新建翻页事件
                     slideEventID = touchEventID;
@@ -176,9 +176,7 @@ $.installCarousel = function(container, option) {
                     imageList.unbind();
                 }
             } else if (beforeFingerCount && !fingerCount) { // 结束触摸
-                console.log("结束触摸");
                 if (touchEventID != slideEventID) { // 在前一个翻页未完成前进行了触摸,将被忽略
-                    console.log("touchEventID=" + touchEventID + ", slideEventID=" + slideEventID);
                     return;
                 }
 
@@ -205,23 +203,19 @@ $.installCarousel = function(container, option) {
                     slideEventID = 0;
                 }
             } else if (beforeFingerCount) { // 正在触摸
-                console.log("正在触摸");
                 // 计算每个变化的手指, 取变化最大的delta
                 var maxDelta = 0;
                 for (var i = 0; i < event.originalEvent.changedTouches.length; ++i) {
                     var fingerTouch = event.originalEvent.changedTouches[i];
                     if (touchFingers[fingerTouch.identifier] !== undefined) {
-                        if (touchFingers[fingerTouch.identifier] !== null) {
-                            var delta = fingerTouch.clientX - touchFingers[fingerTouch.identifier];
-                            if (Math.abs(delta) > Math.abs(maxDelta)) {
-                                maxDelta = delta;
-                            }
+                        var delta = fingerTouch.clientX - touchFingers[fingerTouch.identifier].clientX;
+                        if (Math.abs(delta) > Math.abs(maxDelta)) {
+                            maxDelta = delta;
                         }
-                        touchFingers[fingerTouch.identifier] = fingerTouch.clientX;
+                        touchFingers[fingerTouch.identifier].clientX = fingerTouch.clientX;
                     }
                 }
                 if (touchEventID != slideEventID) {
-                    console.log("touchEventID=" + touchEventID + ", slideEventID=" + slideEventID);
                     return;
                 }
 
@@ -234,8 +228,6 @@ $.installCarousel = function(container, option) {
                 }
                 setTranslateX(destX);
             }
-
-
         });
     }
 };
