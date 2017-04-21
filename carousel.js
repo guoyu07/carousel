@@ -24,7 +24,8 @@ $.installCarousel = function(container, option) {
     // 默认配置
     var defaultOption = {
         images: new Array(), // 图片URL数组
-        click: function(index, image) {} // 点击回调
+        click: function(index, image) {}, // 点击回调
+        interval: 2000, // 翻滚间隔
     };
     var finalOption = $.extend(true, defaultOption, option);
 
@@ -103,27 +104,42 @@ $.installCarousel = function(container, option) {
 
     // 动画切换图片
     function transImageList(index) {
-        // 启动动画
-        imageList.addClass("slideTrans");
+        // 如果偏移量相同, 则不必执行动画
+        var toTranslateX = index * width * -1;
+        var needTrans = toTranslateX != curX;
 
-        imageList.on('transitionend webkitTransitionEnd oTransitionEnd', function (event) {
-            // 由于transitionend会对每个属性回调一次,所以只处理其中一个
-            if (event.originalEvent.propertyName == "transform") {
-                // 停止动画
-                imageList.removeClass("slideTrans");
-                imageList.unbind();
-                // 判断边界
-                if (index == 0) { // 左边界
-                    setImage(renderImages.length - 2); // 偷梁换柱为倒数第二张图片
-                } else if (index == renderImages.length - 1) { // 右边界
-                    setImage(1); // 偷梁换柱为第二张图片
+        if (needTrans) {
+            // 启动动画
+            imageList.addClass("slideTrans");
+            // 等待动画结束
+            imageList.on('transitionend webkitTransitionEnd oTransitionEnd', function (event) {
+                // 由于transitionend会对每个属性回调一次,所以只处理其中一个
+                if (event.originalEvent.propertyName == "transform") {
+                    // 停止动画
+                    imageList.removeClass("slideTrans");
+                    imageList.unbind();
+                    // 判断边界
+                    if (index == 0) { // 左边界
+                        setImage(renderImages.length - 2); // 偷梁换柱为倒数第二张图片
+                    } else if (index == renderImages.length - 1) { // 右边界
+                        setImage(1); // 偷梁换柱为第二张图片
+                    }
+                    slideEventID = 0;
                 }
-                slideEventID = 0;
-            }
-        });
-
+            });
+        }
         // 向目标页切换
         setImage(index);
+        // 如果偏移量相同, 则立即结束翻页事件
+        if (!needTrans) {
+            // 判断边界
+            if (index == 0) { // 左边界
+                setImage(renderImages.length - 2); // 偷梁换柱为倒数第二张图片
+            } else if (index == renderImages.length - 1) { // 右边界
+                setImage(1); // 偷梁换柱为第二张图片
+            }
+            slideEventID = 0;
+        }
     }
 
     // 设置初始化偏移
@@ -143,6 +159,7 @@ $.installCarousel = function(container, option) {
             if (touchFingers[touch.identifier] === undefined) {
                 touchFingers[touch.identifier] = { clientX: touch.clientX, target: touch.target };
                 ++fingerCount;
+                console.log("新的手指");
             }
         }
         // 将target内消失的手指移除
@@ -151,6 +168,7 @@ $.installCarousel = function(container, option) {
             if (identSet[identifier] === undefined && touchFingers[identifier].target === event.originalEvent.target) {
                 delete(touchFingers[identifier]);
                 --fingerCount;
+                console.log("离开手指");
             }
         }
     }
@@ -186,22 +204,13 @@ $.installCarousel = function(container, option) {
                 var deltaX = Math.abs(curX - prevX);
                 // 触屏时间
                 var deltaTime = new Date().getTime() - touchStartTime;
-                // 是否满足翻页
-                var isSlide = false;
-                if (deltaX * 2>= width || deltaTime <= 200) { // 超过半屏 或者 触屏时间小于200毫秒
-                    isSlide = true;
+                // 计算下一页
+                var nextIndex = curIndex;
+                if (deltaX * 2>= width || (deltaX && deltaTime <= 200)) { // 超过半屏 或者 触屏时间小于200毫秒
+                    nextIndex = curIndex + (curX < prevX ? 1 : -1);
                 }
-
-                // 满足翻页, 计算下一页的下标
-                if (deltaX != 0) {
-                    if (isSlide) {
-                        transImageList(curIndex + (curX < prevX ? 1 : -1));
-                    } else { // 否则回到原先位置
-                        transImageList(curIndex);
-                    }
-                } else { // 没有滑动, 不执行动画
-                    slideEventID = 0;
-                }
+                // 翻页
+                transImageList(nextIndex);
             } else if (beforeFingerCount) { // 正在触摸
                 // 计算每个变化的手指, 取变化最大的delta
                 var maxDelta = 0;
