@@ -20,6 +20,8 @@ $.installCarousel = function(container, option) {
     var curX = 0;
     // 触摸开始/结束时间
     var touchStartTime = 0;
+    // 轮播定时器
+    var timer = null;
 
     // 默认配置
     var defaultOption = {
@@ -142,6 +144,24 @@ $.installCarousel = function(container, option) {
         }
     }
 
+    // 启动轮播定时器
+    function startSlideTimer() {
+        timer = setInterval(function() {
+            // 当前没有进行中的翻页事件
+            if (!slideEventID) {
+                // 创建翻页事件
+                slideEventID = - 1;
+                // 向右翻页
+                transImageList(curIndex + 1);
+            }
+        }, finalOption.interval);
+    }
+
+    // 停止轮播定时器
+    function stopSlideTimer() {
+        clearInterval(timer);
+    }
+
     // 设置初始化偏移
     setImage(finalOption.images.length > 1 ? 1 : 0);
     // 底片添加到容器
@@ -238,5 +258,8 @@ $.installCarousel = function(container, option) {
                 setTranslateX(destX);
             }
         });
+
+        // 启动轮播
+        startSlideTimer();
     }
 };
