@@ -20,6 +20,8 @@ $.installCarousel = function(container, option) {
     var curX = 0;
     // 触摸开始/结束时间
     var touchStartTime = 0;
+    // 轮播定时器
+    var timer = null;
 
     // 默认配置
     var defaultOption = {
@@ -77,6 +79,14 @@ $.installCarousel = function(container, option) {
         })(i, renderImages[i]));
         imageList.append(imageItem);
     }
+    // 添加页码区域
+    var pointBox = $('<div class="carouselPointBox"></div>');
+    var pointList = $('<div class="carouselPointList"></div>')
+    pointBox.append(pointList);
+    for (var i = 0; i < finalOption.images.length; ++i) {
+        pointList.append($('<div class="carouselPoint"></div>'));
+    }
+    $(container).append(pointBox);
 
     // 设置transform的函数
     function cssTransform(node, content) {
@@ -100,6 +110,39 @@ $.installCarousel = function(container, option) {
         curIndex = index;
         var translateX = index * width * -1;
         setTranslateX(translateX);
+
+        // 更新页码
+        var page = curIndex;
+        if (finalOption.images.length > 1) {
+            --page;
+            if (page == -1) {
+                page = finalOption.images.length - 1;
+            } else if (page == finalOption.images.length) {
+                page = 0;
+            }
+        }
+        // 清理当前的选中页码
+        pointList.find("div").removeClass('carouselActivePoint');
+        // 高亮新的页码
+        $(pointList.find("div").get(page)).addClass('carouselActivePoint');
+    }
+
+    // 启动轮播定时器
+    function startSlideTimer() {
+        timer = setTimeout(function() {
+            // 当前没有进行中的翻页事件
+            if (!slideEventID) {
+                // 创建翻页事件
+                slideEventID = - 1;
+                // 向右翻页
+                transImageList(curIndex + 1);
+            }
+        }, finalOption.interval);
+    }
+
+    // 停止轮播定时器
+    function stopSlideTimer() {
+        clearTimeout(timer);
     }
 
     // 动画切换图片
@@ -125,6 +168,8 @@ $.installCarousel = function(container, option) {
                         setImage(1); // 偷梁换柱为第二张图片
                     }
                     slideEventID = 0;
+                    // 动画结束, 重启定时器
+                    startSlideTimer();
                 }
             });
         }
@@ -139,6 +184,8 @@ $.installCarousel = function(container, option) {
                 setImage(1); // 偷梁换柱为第二张图片
             }
             slideEventID = 0;
+            // 无需动画,立即重启定时器
+            startSlideTimer();
         }
     }
 
@@ -159,7 +206,6 @@ $.installCarousel = function(container, option) {
             if (touchFingers[touch.identifier] === undefined) {
                 touchFingers[touch.identifier] = { clientX: touch.clientX, target: touch.target };
                 ++fingerCount;
-                console.log("新的手指");
             }
         }
         // 将target内消失的手指移除
@@ -168,7 +214,6 @@ $.installCarousel = function(container, option) {
             if (identSet[identifier] === undefined && touchFingers[identifier].target === event.originalEvent.target) {
                 delete(touchFingers[identifier]);
                 --fingerCount;
-                console.log("离开手指");
             }
         }
     }
@@ -192,6 +237,8 @@ $.installCarousel = function(container, option) {
                     // 停止当前的动画
                     imageList.removeClass("slideTrans");
                     imageList.unbind();
+                    // 停止定时器
+                    stopSlideTimer();
                 }
             } else if (beforeFingerCount && !fingerCount) { // 结束触摸
                 if (touchEventID != slideEventID) { // 在前一个翻页未完成前进行了触摸,将被忽略
@@ -238,5 +285,8 @@ $.installCarousel = function(container, option) {
                 setTranslateX(destX);
             }
         });
+
+        // 启动轮播
+        startSlideTimer();
     }
 };
