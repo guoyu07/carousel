@@ -225,6 +225,8 @@ $.installCarousel = function(container, option) {
 
         // 统一处理
         $(container).on("touchstart touchmove touchend touchcancel", function(event) {
+            // 阻止浏览器对该容器元素的默认行为
+            event.preventDefault();
             // 防止事件冒泡到body，触发浏览器的默认行为
             event.stopPropagation();
 
