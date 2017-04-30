@@ -225,6 +225,9 @@ $.installCarousel = function(container, option) {
 
         // 统一处理
         $(container).on("touchstart touchmove touchend touchcancel", function(event) {
+            // 阻止浏览器对触摸事件的默认行为
+            event.preventDefault();
+
             var beforeFingerCount = fingerCount;
             compareTouchFingers(event);
 
