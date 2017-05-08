@@ -28,6 +28,8 @@ $.installCarousel = function(container, option) {
         images: new Array(), // 图片URL数组
         click: function(index, image) {}, // 点击回调
         interval: 2000, // 翻滚间隔
+        // 图片加载期间的占位图
+        placeholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC',
     };
     var finalOption = $.extend(true, defaultOption, option);
 
@@ -60,7 +62,15 @@ $.installCarousel = function(container, option) {
     // 添加图片
     for (var i = 0; i < renderImages.length; ++i) {
         var imageItem = $('<img>');
-        imageItem.attr("src", renderImages[i]);
+        // 启动一个临时<img>异步加载图片
+        $('<img>').bind("load", (function(imgNode, imgUrl) {
+            return function () {
+                imgNode.attr("src", imgUrl); // 加载完成后恢复图片
+            }
+        })(imageItem, renderImages[i])).attr('src', renderImages[i]);
+        // 先展示内联的占位图
+        imageItem.attr("src", finalOption.placeholder);
+        // 设置各种其他属性
         imageItem.css("width", width + "px");
         imageItem.css("height", height + "px");
         imageItem.bind("click", (function(i, image) {
